@@ -1,7 +1,15 @@
 const Promise = require('./lib/index')
 
-const a = () => new Promise((resolve) => {
-  setTimeout(() => {resolve(111)}, 1000)
-})
 
-Promise.all([1,2,3,a(), a()]).then(console.log)
+new Promise((resolve, reject) => {
+  setTimeout(() => {
+    resolve(1)
+  }, 1000)
+}).then(res1 => {
+  return new Promise((resolve) => {
+    console.log({res1})
+    setTimeout(() => resolve(2))
+  })
+}).finally(() => {
+  return 1
+}).then(console.log)
