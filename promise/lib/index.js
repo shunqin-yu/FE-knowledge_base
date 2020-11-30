@@ -2,7 +2,9 @@ const utils = require('./../../utils')
 const PENDING = Symbol('PENDING')
 const FULFILLED = Symbol('FULFILLED')
 const REJECTED = Symbol('REJECTED')
-const isPromise = promise => (utils.isObject(promise) || utils.isFunction(promise)) && utils.isFunction(promise.then)
+const isPromise = (promise) =>
+  (utils.isObject(promise) || utils.isFunction(promise)) &&
+  utils.isFunction(promise.then)
 
 function defer() {
   let dfd = {}
@@ -29,12 +31,13 @@ class Promise {
 
       for (let i = 0; i < count; i++) {
         const current = promises[i]
-        if (isPromise(current)) Promise.resolve(current).then(processData(i), reject)
+        if (isPromise(current))
+          Promise.resolve(current).then(processData(i), reject)
         else processData(i)(current)
       }
     })
   }
-  
+
   static race(promises) {
     return new Promise((resolve, reject) => {
       for (let i = 0; i < promises.length; i++) {
@@ -65,14 +68,14 @@ class Promise {
       if (this.status !== PENDING) return
       this.status = FULFILLED
       this.value = value
-      this.onFulfilled.forEach(fn => fn())
+      this.onFulfilled.forEach((fn) => fn())
     }
 
     const reject = (reason) => {
       if (this.status !== PENDING) return
       this.status = REJECTED
       this.reason = reason
-      this.onRejected.forEach(fn => fn())
+      this.onRejected.forEach((fn) => fn())
     }
 
     try {
@@ -83,8 +86,11 @@ class Promise {
   }
 
   then(onFulfilled, onRejected) {
-    utils.isFunction(onFulfilled) || (onFulfilled = v => v)
-    utils.isFunction(onRejected) || (onRejected = err => { throw err })
+    utils.isFunction(onFulfilled) || (onFulfilled = (v) => v)
+    utils.isFunction(onRejected) ||
+      (onRejected = (err) => {
+        throw err
+      })
 
     let promise = new Promise((resolve, reject) => {
       if (this.status === FULFILLED) {
@@ -142,13 +148,19 @@ class Promise {
 
   finally(cb) {
     return this.then(
-      data => Promise.resolve(cb()).then(() => data),
-      err => Promise.resolve(cb()).then(() => { throw err })
+      (data) => Promise.resolve(cb()).then(() => data),
+      (err) =>
+        Promise.resolve(cb()).then(() => {
+          throw err
+        })
     )
   }
 
   resolvePromise(promise, x, resolve, reject) {
-    if (x === promise) return reject(new TypeError('Chaining cycle detected for promise #<Promise>'))
+    if (x === promise)
+      return reject(
+        new TypeError('Chaining cycle detected for promise #<Promise>')
+      )
     let once = false
 
     if (utils.isObject(x) || utils.isFunction(x)) {
@@ -157,12 +169,12 @@ class Promise {
         if (utils.isFunction(then)) {
           then.call(
             x,
-            y => {
+            (y) => {
               if (once) return
               once = true
               this.resolvePromise(promise, y, resolve, reject)
             },
-            r => {
+            (r) => {
               if (once) return
               once = true
               reject(r)

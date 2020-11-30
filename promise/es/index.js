@@ -2,7 +2,9 @@ const utils = require('./../../utils')
 const PENDING = Symbol('PENDING')
 const FULFILLED = Symbol('FULFILLED')
 const REJECTED = Symbol('REJECTED')
-const isPromise = promise => (utils.isObject(promise) || utils.isFunction(promise)) && utils.isFunction(promise.then)
+const isPromise = (promise) =>
+  (utils.isObject(promise) || utils.isFunction(promise)) &&
+  utils.isFunction(promise.then)
 
 function defer() {
   let dfd = {}
@@ -33,12 +35,13 @@ class Promise {
       // 每个任务完成时callCount + 1
       for (let i = 0; i < count; i++) {
         const current = promises[i]
-        if (isPromise(current)) Promise.resolve(current).then(processData(i), reject)
+        if (isPromise(current))
+          Promise.resolve(current).then(processData(i), reject)
         else processData(i)(current)
       }
     })
   }
-  
+
   // 竞态：有一个成功或失败便返回
   static race(promises) {
     return new Promise((resolve, reject) => {
@@ -72,14 +75,14 @@ class Promise {
       if (this.status !== PENDING) return
       this.status = FULFILLED
       this.value = value
-      this.onFulfilled.forEach(fn => fn()) // 循环执行成功队列, fn为传入的onFulfilled
+      this.onFulfilled.forEach((fn) => fn()) // 循环执行成功队列, fn为传入的onFulfilled
     }
 
     const reject = (reason) => {
       if (this.status !== PENDING) return
       this.status = REJECTED
       this.reason = reason
-      this.onRejected.forEach(fn => fn()) // 循环执行失败队列, fn为传入的onRejected
+      this.onRejected.forEach((fn) => fn()) // 循环执行失败队列, fn为传入的onRejected
     }
 
     try {
@@ -94,8 +97,11 @@ class Promise {
     // 如果入参不为函数类型
     // onFulfilled默认返回上次的结果
     // onRejected默认继续将错误往下一个抛
-    utils.isFunction(onFulfilled) || (onFulfilled = v => v)
-    utils.isFunction(onRejected) || (onRejected = err => { throw err })
+    utils.isFunction(onFulfilled) || (onFulfilled = (v) => v)
+    utils.isFunction(onRejected) ||
+      (onRejected = (err) => {
+        throw err
+      })
 
     let promise = new Promise((resolve, reject) => {
       // 由于这个回调(executor)执行时promise实例还未生成完毕，所以想在这里获取实例对象只能通过异步来获取
@@ -160,14 +166,20 @@ class Promise {
   // 不管成功失败都会走finally，finally回调无参数，执行完finally后会将上个状态返回值透传给下个promise
   finally(cb) {
     return this.then(
-      data => Promise.resolve(cb()).then(() => data),
-      err => Promise.resolve(cb()).then(() => { throw err })
+      (data) => Promise.resolve(cb()).then(() => data),
+      (err) =>
+        Promise.resolve(cb()).then(() => {
+          throw err
+        })
     )
   }
 
   resolvePromise(promise, x, resolve, reject) {
     // 如果返回值是当前实例，那么抛错提示循环引用
-    if (x === promise) return reject(new TypeError('Chaining cycle detected for promise #<Promise>'))
+    if (x === promise)
+      return reject(
+        new TypeError('Chaining cycle detected for promise #<Promise>')
+      )
     let once = false
 
     if (utils.isObject(x) || utils.isFunction(x)) {
@@ -180,13 +192,13 @@ class Promise {
           // 状态一经改变便无法再次改变，使用once控制调用
           then.call(
             x,
-            y => {
+            (y) => {
               if (once) return
               once = true
               // y有可能还是一个promsie，所以递归调用该值，如果是promise就继续处理，普通值就resolve
               this.resolvePromise(promise, y, resolve, reject)
             },
-            r => {
+            (r) => {
               if (once) return
               once = true
               reject(r)
